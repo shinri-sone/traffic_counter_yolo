@@ -15,7 +15,7 @@ for f in files:
 
 tracker = Sort()
 memory = {}
-line = [(43, 543), (550, 655)]
+line = [(550, 800), (1600, 800)]
 counter = 0
 
 # construct the argument parse and parse the arguments
