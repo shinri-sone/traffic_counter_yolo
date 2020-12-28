@@ -15,7 +15,8 @@ for f in files:
 
 tracker = Sort()
 memory = {}
-line = [(550, 800), (1600, 800)]
+# line = [(550, 800), (1600, 800)]
+line = [(43, 543), (550, 655)]
 counter = 0
 
 # construct the argument parse and parse the arguments
@@ -65,8 +66,9 @@ configPath = os.path.sep.join([args["yolo"], "yolov3.cfg"])
 print("[INFO] loading YOLO from disk...")
 net = cv2.dnn.readNetFromDarknet(configPath, weightsPath)
 ln = net.getLayerNames()
+print("old_ln", ln)
 ln = [ln[i[0] - 1] for i in net.getUnconnectedOutLayers()]
-
+print("ln", ln)
 # initialize the video stream, pointer to output video file, and
 # frame dimensions
 vs = cv2.VideoCapture(args["input"])
