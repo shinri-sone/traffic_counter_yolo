@@ -7,16 +7,19 @@ import cv2
 import os
 import glob
 
-from sort import *
-
-files = glob.glob("output/*.png")
+files = glob.glob("output2/*.png")
 for f in files:
     os.remove(f)
 
+from sort import *
+from helper.draw_line import DrawLineWidget
+
+
 tracker = Sort()
 memory = {}
-line = [(442, 594), (892, 538)]
+# line = [(550, 543), (1050, 655)]
 counter = 0
+
 
 # construct the argument parse and parse the arguments
 ap = argparse.ArgumentParser()
@@ -46,6 +49,10 @@ def intersect(A, B, C, D):
 
 def ccw(A, B, C):
     return (C[1] - A[1]) * (B[0] - A[0]) > (B[1] - A[1]) * (C[0] - A[0])
+
+
+def setline(line):
+    return line
 
 
 # load the COCO class labels our YOLO model was trained on
@@ -94,11 +101,29 @@ except:
 while True:
     # read the next frame from the file
     (grabbed, frame) = vs.read()
-
     # if the frame was not grabbed, then we have reached the end
     # of the stream
     if not grabbed:
         break
+
+    draw_line_widget = DrawLineWidget(frame)
+    if frameIndex == 0:
+        # line_obj = setLine(frame)
+        # line = line_obj.get_points()
+        draw_line_widget = DrawLineWidget(frame)
+        while True:
+            cv2.imshow("image", draw_line_widget.show_image())
+            key = cv2.waitKey(1)
+
+            # Close program with keyboard 'q'
+            if key == ord("q"):
+                line = draw_line_widget.fetch_line_pos().copy()
+                cv2.destroyAllWindows()
+                break
+    else:
+        line = line.copy()
+
+    print(frameIndex, line)
 
     # if the frame dimensions are empty, grab them
     if W is None or H is None:
@@ -150,9 +175,9 @@ while True:
                 boxes.append([x, y, int(width), int(height)])
                 confidences.append(float(confidence))
                 classIDs.append(classID)
-
     # apply non-maxima suppression to suppress weak, overlapping
     # bounding boxes
+    print(f"[INFO] classIDs:{classIDs},boxes:{boxes}")
     idxs = cv2.dnn.NMSBoxes(boxes, confidences, args["confidence"], args["threshold"])
 
     dets = []
@@ -165,8 +190,11 @@ while True:
 
     np.set_printoptions(formatter={"float": lambda x: "{0:0.3f}".format(x)})
     dets = np.asarray(dets)
-
-    tracks = tracker.update(dets) if len(dets) else []
+    print(f"[INFO] {dets}")
+    if len(classIDs):
+        tracks = tracker.update(dets)
+    else:
+        tracks=[]
 
     boxes = []
     indexIDs = []
@@ -202,10 +230,14 @@ while True:
                 cv2.line(frame, p0, p1, color, 3)
 
                 if intersect(p0, p1, line[0], line[1]):
+                    print(f"[Info]cross:{text}")
                     counter += 1
 
-            # text = "{}: {:.4f}".format(LABELS[classIDs[i]], confidences[i])
-            text = "{}".format(indexIDs[i])
+            print(classIDs, confidences)
+            if len(classIDs):
+                text = "{}: {:.4f}".format(LABELS[classIDs[i]], confidences[i])
+                print(f"[INFO]:{text}")
+            # text = "{}".format(indexIDs[i])
             cv2.putText(
                 frame, text, (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2
             )
@@ -221,7 +253,7 @@ while True:
     # counter += 1
 
     # saves image file
-    cv2.imwrite("output/frame-{}.png".format(frameIndex), frame)
+    cv2.imwrite("output2/frame-{}.png".format(frameIndex), frame)
 
     # check if the video writer is None
     if writer is None:
