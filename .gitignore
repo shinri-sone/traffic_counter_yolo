@@ -1,6 +1,6 @@
 *.DS_Store
 __pycache__/
-output/*
+output*/
 !output/.gitkeep
 *.pyc
 yolo-coco/yolov3.weights
