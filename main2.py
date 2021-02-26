@@ -6,14 +6,24 @@ import time
 import cv2
 import os
 import glob
+from sort import *
+from helper.draw_line import DrawLineWidget
+import logging
+from logging import getLogger
 
+# outputフォルダの初期化
 files = glob.glob("output2/*.png")
 for f in files:
     os.remove(f)
 
-from sort import *
-from helper.draw_line import DrawLineWidget
 
+# ロギングの基本設定(infoレベルを指定)
+logging.basicConfig(level=logging.INFO, filename='logfile/logger.log')
+logging.info('info')
+
+# 現在のロギングの情報を取得(引数はファイル名)
+logger = getLogger(__name__)
+logger.debug('ロギング 開始')
 
 tracker = Sort()
 memory = {}
@@ -69,7 +79,7 @@ configPath = os.path.sep.join([args["yolo"], "yolov3.cfg"])
 
 # load our YOLO object detector trained on COCO dataset (80 classes)
 # and determine only the *output* layer names that we need from YOLO
-print("[INFO] loading YOLO from disk...")
+logger.info("loading YOLO from disk...")
 net = cv2.dnn.readNetFromDarknet(configPath, weightsPath)
 ln = net.getLayerNames()
 ln = [ln[i[0] - 1] for i in net.getUnconnectedOutLayers()]
@@ -88,13 +98,13 @@ try:
         cv2.cv.CV_CAP_PROP_FRAME_COUNT if imutils.is_cv2() else cv2.CAP_PROP_FRAME_COUNT
     )
     total = int(vs.get(prop))
-    print("[INFO] {} total frames in video".format(total))
+    logger.info("{} total frames in video".format(total))
 
 # an error occurred while trying to determine the total
 # number of frames in the video file
 except:
-    print("[INFO] could not determine # of frames in video")
-    print("[INFO] no approx. completion time can be provided")
+    logger.error("could not determine # of frames in video")
+    logger.error("no approx. completion time can be provided")
     total = -1
 
 # loop over frames from the video file stream
@@ -122,8 +132,8 @@ while True:
                 break
     else:
         line = line.copy()
-
-    print(frameIndex, line)
+    frame_info = str(frameIndex) + str(line)
+    logger.info(f"FRAME INFO:{frame_info}")
 
     # if the frame dimensions are empty, grab them
     if W is None or H is None:
@@ -177,7 +187,7 @@ while True:
                 classIDs.append(classID)
     # apply non-maxima suppression to suppress weak, overlapping
     # bounding boxes
-    print(f"[INFO] classIDs:{classIDs},boxes:{boxes}")
+    logger.info(f"SOME DETECT: classIDs:{classIDs},boxes:{boxes}")
     idxs = cv2.dnn.NMSBoxes(boxes, confidences, args["confidence"], args["threshold"])
 
     dets = []
@@ -190,7 +200,6 @@ while True:
 
     np.set_printoptions(formatter={"float": lambda x: "{0:0.3f}".format(x)})
     dets = np.asarray(dets)
-    print(f"[INFO] {dets}")
     if len(classIDs):
         tracks = tracker.update(dets)
     else:
@@ -221,6 +230,10 @@ while True:
             color = [int(c) for c in COLORS[indexIDs[i] % len(COLORS)]]
             cv2.rectangle(frame, (x, y), (w, h), color, 2)
 
+            if len(classIDs):
+                text = "{}: {:.4f}".format(LABELS[classIDs[i]], confidences[i])
+                logger.info(f"Detect:{text}")
+
             if indexIDs[i] in previous:
                 previous_box = previous[indexIDs[i]]
                 (x2, y2) = (int(previous_box[0]), int(previous_box[1]))
@@ -230,13 +243,10 @@ while True:
                 cv2.line(frame, p0, p1, color, 3)
 
                 if intersect(p0, p1, line[0], line[1]):
-                    print(f"[Info]cross:{text}")
+                    logger.info(f"CROSS:{text}")
                     counter += 1
 
-            print(classIDs, confidences)
-            if len(classIDs):
-                text = "{}: {:.4f}".format(LABELS[classIDs[i]], confidences[i])
-                print(f"[INFO]:{text}")
+            logger.info(f"classIDs:{classIDs},confidences:{confidences}")
             # text = "{}".format(indexIDs[i])
             cv2.putText(
                 frame, text, (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2
@@ -266,8 +276,8 @@ while True:
         # some information on processing single frame
         if total > 0:
             elap = end - start
-            print("[INFO] single frame took {:.4f} seconds".format(elap))
-            print("[INFO] estimated total time to finish: {:.4f}".format(elap * total))
+            logger.info("single frame took {:.4f} seconds".format(elap))
+            logger.info("estimated total time to finish: {:.4f}".format(elap * total))
 
     # write the output frame to disk
     writer.write(frame)
@@ -276,12 +286,12 @@ while True:
     frameIndex += 1
 
     if frameIndex >= 4000:
-        print("[INFO] cleaning up...")
+        logger.info("cleaning up...")
         writer.release()
         vs.release()
         exit()
 
 # release the file pointers
-print("[INFO] cleaning up...")
+logger.info("cleaning up...")
 writer.release()
 vs.release()
