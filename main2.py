@@ -18,18 +18,20 @@ for f in files:
 
 
 # ロギングの基本設定(infoレベルを指定)
-logging.basicConfig(level=logging.INFO, filename='logfile/logger.log')
-logging.info('info')
+logging.basicConfig(level=logging.INFO, filename="logfile/logger.log")
+logging.info("debug")
 
 # 現在のロギングの情報を取得(引数はファイル名)
 logger = getLogger(__name__)
-logger.debug('ロギング 開始')
+logger.debug("ロギング 開始")
 
 tracker = Sort()
 memory = {}
 # line = [(550, 543), (1050, 655)]
 counter = 0
 
+# displayed measured object and counter
+measured = {}
 
 # construct the argument parse and parse the arguments
 ap = argparse.ArgumentParser()
@@ -63,6 +65,16 @@ def ccw(A, B, C):
 
 def setline(line):
     return line
+
+
+def display_traffic_counter(target, **measured):
+    logger.info(f"measured before:{measured}")
+    if target in measured.keys():
+        measured[target] += 1
+    else:
+        measured[target] = 1
+    return measured
+    logger.info(f"measured after:{measured}")
 
 
 # load the COCO class labels our YOLO model was trained on
@@ -133,7 +145,7 @@ while True:
     else:
         line = line.copy()
     frame_info = str(frameIndex) + str(line)
-    logger.info(f"FRAME INFO:{frame_info}")
+    # logger.info(f"FRAME INFO:{frame_info}")
 
     # if the frame dimensions are empty, grab them
     if W is None or H is None:
@@ -187,7 +199,7 @@ while True:
                 classIDs.append(classID)
     # apply non-maxima suppression to suppress weak, overlapping
     # bounding boxes
-    logger.info(f"SOME DETECT: classIDs:{classIDs},boxes:{boxes}")
+    # logger.info(f"SOME DETECT: classIDs:{classIDs},boxes:{boxes}")
     idxs = cv2.dnn.NMSBoxes(boxes, confidences, args["confidence"], args["threshold"])
 
     dets = []
@@ -203,7 +215,7 @@ while True:
     if len(classIDs):
         tracks = tracker.update(dets)
     else:
-        tracks=[]
+        tracks = []
 
     boxes = []
     indexIDs = []
@@ -232,7 +244,7 @@ while True:
 
             if len(classIDs):
                 text = "{}: {:.4f}".format(LABELS[classIDs[i]], confidences[i])
-                logger.info(f"Detect:{text}")
+                # logger.info(f"Detect:{text}")
 
             if indexIDs[i] in previous:
                 previous_box = previous[indexIDs[i]]
@@ -244,6 +256,10 @@ while True:
 
                 if intersect(p0, p1, line[0], line[1]):
                     logger.info(f"CROSS:{text}")
+                    measured = display_traffic_counter(
+                        str(LABELS[classIDs[i]]), **measured
+                    )
+                    logger.info(f"MEASURED:{measured}")
                     counter += 1
 
             logger.info(f"classIDs:{classIDs},confidences:{confidences}")
@@ -257,13 +273,26 @@ while True:
     cv2.line(frame, line[0], line[1], (0, 255, 255), 5)
 
     # draw counter
-    cv2.putText(
-        frame, str(counter), (100, 200), cv2.FONT_HERSHEY_DUPLEX, 5.0, (0, 255, 255), 10
-    )
+    # cv2.putText(
+    #     frame, str(counter), (100, 200), cv2.FONT_HERSHEY_DUPLEX, 5.0, (0, 255, 255), 10
+    # )
     # counter += 1
 
-    # saves image file
-    cv2.imwrite("output2/frame-{}.png".format(frameIndex), frame)
+    # draw measured traffic
+    for i, (k, v) in enumerate(measured.items()):
+        logger.info(f"ikv:{i,k,v}")
+        cv2.putText(
+            frame,
+            str(k) + ":" + str(v),
+            (100, 200 + i * 150),
+            cv2.FONT_HERSHEY_DUPLEX,
+            5.0,
+            (0, 255, 255),
+            10,
+        )
+    else:
+        # saves image file
+        cv2.imwrite("output2/frame-{}.png".format(frameIndex), frame)
 
     # check if the video writer is None
     if writer is None:
@@ -291,6 +320,8 @@ while True:
         vs.release()
         exit()
 
+
+logger.info(f"RESULT MEASURED:{measured}")
 # release the file pointers
 logger.info("cleaning up...")
 writer.release()
