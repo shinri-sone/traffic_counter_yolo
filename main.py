@@ -15,7 +15,7 @@ for f in files:
 
 tracker = Sort()
 memory = {}
-line = [(550, 800), (1600, 800)]
+line = [(442, 594), (892, 538)]
 counter = 0
 
 # construct the argument parse and parse the arguments
@@ -165,7 +165,8 @@ while True:
 
     np.set_printoptions(formatter={"float": lambda x: "{0:0.3f}".format(x)})
     dets = np.asarray(dets)
-    tracks = tracker.update(dets)
+
+    tracks = tracker.update(dets) if len(dets) else []
 
     boxes = []
     indexIDs = []
