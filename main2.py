@@ -49,7 +49,7 @@ ap.add_argument(
     "-t",
     "--threshold",
     type=float,
-    default=0.3,
+    default=0.3,    
     help="threshold when applyong non-maxima suppression",
 )
 args = vars(ap.parse_args())
