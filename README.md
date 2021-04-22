@@ -1,14 +1,18 @@
+# 実行コマンド
+
+`python main2.py --input input/expressway2.mp4 --output output/expressway.avi --yolo yolo-coco`
+
 # Python Traffic Counter
 
-The purpose of this project is to detect and track vehicles on a video stream and count those going through a defined line. 
+The purpose of this project is to detect and track vehicles on a video stream and count those going through a defined line.
 
 ![highway.gif](highway.gif)
 
 It uses:
 
-* [YOLO](https://www.pyimagesearch.com/2018/11/12/yolo-object-detection-with-opencv) to detect objects on each of the video frames.
+- [YOLO](https://www.pyimagesearch.com/2018/11/12/yolo-object-detection-with-opencv) to detect objects on each of the video frames.
 
-* [SORT](https://github.com/abewley/sort) to track those objects over different frames.
+- [SORT](https://github.com/abewley/sort) to track those objects over different frames.
 
 Once the objects are detected and tracked over different frames a simple mathematical calculation is applied to count the intersections between the vehicles previous and current frame positions with a defined line.
 
@@ -20,6 +24,7 @@ The code on this prototype uses the code structure developed by Adrian Rosebrock
 2. [Download yolov3.weights](https://www.dropbox.com/s/99mm7olr1ohtjbq/yolov3.weights?dl=0) and place it in `/yolo-coco`.
 3. Make sure you have Python 3.7.0 and [OpenCV 3.4.2](https://www.pyimagesearch.com/opencv-tutorials-resources-guides/) installed.
 4. Run:
+
 ```
 $ python main.py --input input/highway.mp4 --output output/highway.avi --yolo yolo-coco
 ```
