@@ -4,15 +4,17 @@ import argparse
 import imutils
 import time
 import cv2
+from google.colab.patches import cv2_imshow
 import os
 import glob
 from sort import *
 from helper.draw_line import DrawLineWidget
 import logging
 from logging import getLogger
+from matplotlib import pyplot as plt
 
 # outputフォルダの初期化
-files = glob.glob("output2/*.png")
+files = glob.glob("output/*.png")
 for f in files:
     os.remove(f)
 
@@ -27,7 +29,6 @@ logger.debug("ロギング 開始")
 
 tracker = Sort()
 memory = {}
-# line = [(550, 543), (1050, 655)]
 counter = 0
 
 # displayed measured object and counter
@@ -128,20 +129,23 @@ while True:
     if not grabbed:
         break
 
-    draw_line_widget = DrawLineWidget(frame)
+    #draw_line_widget = DrawLineWidget(frame)
     if frameIndex == 0:
         # line_obj = setLine(frame)
         # line = line_obj.get_points()
-        draw_line_widget = DrawLineWidget(frame)
-        while True:
-            cv2.imshow("image", draw_line_widget.show_image())
-            key = cv2.waitKey(1)
+        # draw_line_widget = DrawLineWidget(frame)
+        # while True:
+        #     cv2.imshow("image", draw_line_widget.show_image())
+        #     key = cv2.waitKey(1)
 
-            # Close program with keyboard 'q'
-            if key == ord("q"):
-                line = draw_line_widget.fetch_line_pos().copy()
-                cv2.destroyAllWindows()
-                break
+        #     # Close program with keyboard 'q'
+        #     if key == ord("q"):
+        #         line = draw_line_widget.fetch_line_pos().copy()
+        #         cv2.destroyAllWindows()
+        #         break
+        line = [(550, 543), (1050, 655)]
+
+
     else:
         line = line.copy()
     frame_info = str(frameIndex) + str(line)
